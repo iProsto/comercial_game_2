@@ -68,14 +68,17 @@ public class WebView extends AppCompatActivity {
         settings.setDomStorageEnabled(true);
         settings.setJavaScriptEnabled(true);
         settings.setAllowContentAccess(true);
-        settings.setAllowUniversalAccessFromFileURLs(true);
+        settings.setAllowUniversalAccessFromFileURLs(false);
         settings.setLoadsImagesAutomatically(true);
-        settings.setSupportMultipleWindows(true);
+        settings.setSupportMultipleWindows(false);
+        settings.setJavaScriptCanOpenWindowsAutomatically(true);
+        settings.setMediaPlaybackRequiresUserGesture(true);
+        settings.setUseWideViewPort(true);
         settings.setDisplayZoomControls(false);
         settings.setAllowFileAccess(true);
         settings.setAppCacheEnabled(true);
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
-        settings.setLoadWithOverviewMode(true);
+        settings.setLoadWithOverviewMode(false);
         webView.setScrollBarStyle(View.SCROLLBARS_INSIDE_OVERLAY);
         CookieManager.getInstance().setAcceptCookie(true);
         CookieManager.getInstance().setAcceptThirdPartyCookies(webView, true);
@@ -141,6 +144,7 @@ public class WebView extends AppCompatActivity {
                     return false;
                 }
                 return true;
+
             }
         };
 
@@ -225,15 +229,27 @@ public class WebView extends AppCompatActivity {
     @Override
     public void onBackPressed() {
         if (webView.canGoBack()) {
-            if (webView.copyBackForwardList().getSize() >= 7) {
-                webView.goBackOrForward(-3);
-                bigBack = true;
-            } else {
+//            if (webView.copyBackForwardList().getSize() >= 7) {
+//                webView.goBackOrForward(-3);
+//                bigBack = true;
+//            } else {
                 webView.goBack();
-            }
+//            }
             return;
         }
         super.onBackPressed();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        webView.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        webView.onResume();
     }
 
     private void console(String msg) {
