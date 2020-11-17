@@ -9,7 +9,7 @@
     tools:context=".MainActivity">
 
     <LinearLayout
-        android:id="@+id/gameLayout"
+        android:id="@+id/gameScene"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"

@@ -1,3 +1,5 @@
 <resources>
-    <string name="app_name">ComercialGame2</string>
+    <string name="app_name">Go Play</string>
+    <string name="facebook_app_id">485069779136027</string>
+    <string name="one_signal">4ac240e2-bd88-477b-a7ae-105f5e2abf86</string>
 </resources>

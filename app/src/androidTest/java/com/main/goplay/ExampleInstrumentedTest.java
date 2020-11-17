@@ -1,4 +1,4 @@
-package com.main.comercialgame2;
+package com.main.goplay;
 
 import android.content.Context;
 
