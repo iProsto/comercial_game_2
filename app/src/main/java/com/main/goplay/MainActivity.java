@@ -43,27 +43,26 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void waiterForBool(boolean bool) {
                 if (showGame != bool) {
-                    showGameHideWebView(bool);
+                    showGame = bool;
+                    memory.saveState(showGame);
                 }
             }
 
             @Override
             public void waiterForLink(String link) {
-                if (!webViewURL.equals(link)) {
-                    webViewURL = link;
-                    showGameHideWebView(showGame);
-                }
+                webViewURL = link;
+                showGameHideWebView(showGame);
             }
 
             @Override
-            public void rejection(){
-                if(memory.firstStart()){
+            public void rejection() {
+                if (memory.firstStart()) {
                     showGameHideWebView(true);
                 }
             }
         });
 
-        if (!memory.firstStart()){
+        if (!memory.firstStart()) {
             showGameHideWebView(memory.isShowGame(showGame));
         }
 
@@ -76,10 +75,8 @@ public class MainActivity extends AppCompatActivity {
         finish();
     }
 
-
-
-    private void initGame(){
-        Toast.makeText(getApplicationContext(), "Жми на стрелку!", Toast.LENGTH_LONG).show();
+    private void initGame() {
+        Toast.makeText(getApplicationContext(), "Жми на стрелку!", Toast.LENGTH_SHORT).show();
 
         winner1Image = findViewById(R.id.winner1Image);
         winner2Image = findViewById(R.id.winner2Image);
@@ -89,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void showGameHideWebView(boolean showGame) {
-        runOnUiThread(()->{
+        runOnUiThread(() -> {
             this.showGame = showGame;
             memory.saveState(showGame);
             if (!showGame) {
@@ -110,52 +107,7 @@ public class MainActivity extends AppCompatActivity {
         memory.saveState(showGame);
     }
 
-//    public void saveLink(String url) {
-//        SharedPreferences sPref;
-//        sPref = getPreferences(MODE_PRIVATE);
-//        SharedPreferences.Editor ed = sPref.edit();
-//        ed.putString(REF_NAME, url);
-//        ed.commit();
-//    }
-//
-//    public String loadLink() {
-//        SharedPreferences sPref;
-//        String answerString;
-//        sPref = getPreferences(MODE_PRIVATE);
-//        answerString = sPref.getString(REF_NAME, webViewURL);
-//        return answerString;
-//    }
-//
-//    public void saveState(boolean showGame) {
-//        SharedPreferences sPref;
-//        sPref = getPreferences(MODE_PRIVATE);
-//        SharedPreferences.Editor ed = sPref.edit();
-//        ed.putBoolean(STATE_NAME, showGame);
-//        ed.commit();
-//        showLog("Save Game STATE: " + showGame);
-//    }
-//
-//    private boolean isShowGame() {
-//        SharedPreferences sPref;
-//        sPref = getPreferences(MODE_PRIVATE);
-//        showLog("Load Game STATE: " + sPref.getBoolean(STATE_NAME, showGame));
-//        return sPref.getBoolean(STATE_NAME, showGame);
-//    }
-//
-//    private boolean firstStart() {
-//        boolean answ;
-//        SharedPreferences sPref;
-//        sPref = getPreferences(MODE_PRIVATE);
-//        answ = sPref.getBoolean(FIRST_START, true);
-//        showLog("Load FIRST: " + sPref.getBoolean(FIRST_START, true));
-//
-//        SharedPreferences.Editor ed = sPref.edit();
-//        ed.putBoolean(FIRST_START, false);
-//        ed.commit();
-//        return answ;
-//    }
-
-    private void startSpin(View v){
+    private void startSpin(View v) {
         if (!spinIsStarted) {
             winner1Image.setVisibility(View.INVISIBLE);
             winner2Image.setVisibility(View.INVISIBLE);

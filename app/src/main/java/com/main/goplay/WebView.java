@@ -8,12 +8,14 @@ import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.net.http.SslError;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.webkit.CookieManager;
 import android.webkit.SslErrorHandler;
@@ -22,6 +24,7 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebViewClient;
+import android.widget.FrameLayout;
 import android.widget.Toast;
 
 import com.facebook.FacebookSdk;
@@ -32,8 +35,14 @@ import com.onesignal.OneSignal;
 public class WebView extends AppCompatActivity {
 
     private android.webkit.WebView webView;
-    private boolean bigBack = false;
     String url = MainActivity.webViewURL;
+
+
+    private FrameLayout customViewContainer;
+    private WebChromeClient.CustomViewCallback customViewCallback;
+    private View mCustomView;
+    private WebViewChromeClient mWebChromeClient;
+
 
     //# OTHER
     public ValueCallback<Uri[]> uploadMessage;
@@ -49,8 +58,9 @@ public class WebView extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_webview);
 
+        customViewContainer = (FrameLayout) findViewById(R.id.customViewContainer);
         webView = findViewById(R.id.webView);
-        webView.setBackgroundColor(Color.argb(255, 30,30,68));
+        webView.setBackgroundColor(Color.argb(255, 30, 30, 68));
 
         initWebView();
         initOneSignal();
@@ -58,7 +68,7 @@ public class WebView extends AppCompatActivity {
         initGoogleAnalytics();
     }
 
-    private void initGoogleAnalytics(){
+    private void initGoogleAnalytics() {
         mFirebaseAnalytics = FirebaseAnalytics.getInstance(this);
     }
 
@@ -127,9 +137,12 @@ public class WebView extends AppCompatActivity {
             }
         };
 
-        WebChromeClient myChromeClient = new WebChromeClient() {
-            // For Lollipop 5.0+ Devices
-            public boolean onShowFileChooser(android.webkit.WebView mWebView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+        mWebChromeClient = new WebViewChromeClient();
+        new WebChromeClient() {
+            @Override
+            public boolean onShowFileChooser(android.webkit.WebView mWebView,
+                                             ValueCallback<Uri[]> filePathCallback,
+                                             FileChooserParams fileChooserParams) {
                 if (uploadMessage != null) {
                     uploadMessage.onReceiveValue(null);
                     uploadMessage = null;
@@ -148,7 +161,7 @@ public class WebView extends AppCompatActivity {
             }
         };
 
-        webView.setWebChromeClient(myChromeClient);
+        webView.setWebChromeClient(mWebChromeClient);
         webView.setWebViewClient(webViewClient);
         webView.loadUrl(url);
     }
@@ -194,6 +207,15 @@ public class WebView extends AppCompatActivity {
         console("Link got2: " + newUrl);
     }
 
+    public boolean inCustomView() {
+        return (mCustomView != null);
+    }
+
+    public void hideCustomView() {
+        mWebChromeClient.onHideCustomView();
+    }
+
+
     @Override
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
@@ -228,13 +250,12 @@ public class WebView extends AppCompatActivity {
 
     @Override
     public void onBackPressed() {
-        if (webView.canGoBack()) {
-//            if (webView.copyBackForwardList().getSize() >= 7) {
-//                webView.goBackOrForward(-3);
-//                bigBack = true;
-//            } else {
-                webView.goBack();
-//            }
+        if (inCustomView()) {
+            hideCustomView();
+            return;
+        }
+        if ((mCustomView == null) && webView.canGoBack()) {
+            webView.goBack();
             return;
         }
         super.onBackPressed();
@@ -250,6 +271,77 @@ public class WebView extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
         webView.onResume();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if (inCustomView()) {
+            hideCustomView();
+        }
+    }
+
+    class WebViewChromeClient extends WebChromeClient {
+        private View mVideoProgressView;
+
+        @Override
+        public boolean onShowFileChooser(android.webkit.WebView mWebView, ValueCallback<Uri[]> filePathCallback, FileChooserParams fileChooserParams) {
+            if (uploadMessage != null) {
+                uploadMessage.onReceiveValue(null);
+                uploadMessage = null;
+            }
+            uploadMessage = filePathCallback;
+            Intent intent = fileChooserParams.createIntent();
+            try {
+                startActivityForResult(intent, REQUEST_SELECT_FILE);
+            } catch (ActivityNotFoundException e) {
+                uploadMessage = null;
+                Toast.makeText(WebView.this, "Cannot Open File Chooser", Toast.LENGTH_LONG).show();
+                return false;
+            }
+            return true;
+        }
+
+        @Override
+        public void onShowCustomView(View view, CustomViewCallback callback) {
+            if (mCustomView != null) {
+                callback.onCustomViewHidden();
+                return;
+            }
+            mCustomView = view;
+            webView.setVisibility(View.GONE);
+            customViewContainer.setVisibility(View.VISIBLE);
+            customViewContainer.addView(view);
+            customViewCallback = callback;
+        }
+
+        @Override
+        public View getVideoLoadingProgressView() {
+            if (mVideoProgressView == null) {
+                LayoutInflater inflater = LayoutInflater.from(WebView.this);
+                mVideoProgressView = inflater.inflate(R.layout.video_progress, null);
+            }
+            return mVideoProgressView;
+        }
+
+        @Override
+        public void onHideCustomView() {
+            super.onHideCustomView();
+            if (mCustomView == null)
+                return;
+
+            webView.setVisibility(View.VISIBLE);
+            customViewContainer.setVisibility(View.GONE);
+
+            // Hide the custom view.
+            mCustomView.setVisibility(View.GONE);
+
+            // Remove the custom view from its container.
+            customViewContainer.removeView(mCustomView);
+            customViewCallback.onCustomViewHidden();
+
+            mCustomView = null;
+        }
     }
 
     private void console(String msg) {
